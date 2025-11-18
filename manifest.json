@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Better Trading",
-  "version": "1.0",
+  "version": "1.0.0",
   "description": "Improves UI/UX for Traders",
 
   "content_scripts": [
