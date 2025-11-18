@@ -1,0 +1,17 @@
+{
+  "manifest_version": 2,
+  "name": "Better Trading",
+  "version": "1.0",
+  "description": "Improves UI/UX for Traders",
+
+  "content_scripts": [
+    {
+      "matches": ["*://*.tradingview.com/*", "*://*.coinglass.com/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_end"
+    }
+  ],
+
+  "permissions": ["activeTab"]
+}

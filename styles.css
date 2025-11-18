@@ -1,0 +1,102 @@
+/* styles.css */
+
+/* 3-dot menu button */
+.quick-links-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	margin-right: 4px;
+	cursor: pointer;
+	border-radius: 4px;
+	color: #787b86;
+	transition:
+		background-color 0.2s,
+		color 0.2s;
+}
+
+.quick-links-button:hover {
+	background-color: rgba(120, 123, 134, 0.1);
+	color: #2962ff;
+}
+
+.quick-links-button svg {
+	pointer-events: none;
+}
+
+/* Popover container */
+.quick-links-popover {
+	display: none;
+	position: fixed;
+	background: #ffffff;
+	border: 1px solid #e0e3eb;
+	border-radius: 6px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	min-width: 220px;
+	z-index: 999999;
+	padding: 4px 0;
+}
+
+/* Dark theme support */
+html.theme-dark .quick-links-popover {
+	background: #1e222d;
+	border-color: #363a45;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.quick-links-popover.active {
+	display: block;
+}
+
+/* Menu item */
+.quick-links-item {
+	display: flex;
+	align-items: center;
+	padding: 8px 12px;
+	cursor: pointer;
+	color: #131722;
+	font-size: 13px;
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu,
+		sans-serif;
+	transition: background-color 0.2s;
+}
+
+html.theme-dark .quick-links-item {
+	color: #d1d4dc;
+}
+
+.quick-links-item:hover {
+	background-color: #f0f3fa;
+}
+
+html.theme-dark .quick-links-item:hover {
+	background-color: #2a2e39;
+}
+
+/* Icon */
+.quick-links-icon {
+	width: 16px;
+	height: 16px;
+	margin-right: 8px;
+	flex-shrink: 0;
+}
+
+/* Separator */
+.quick-links-separator {
+	height: 1px;
+	background-color: #e0e3eb;
+	margin: 4px 0;
+}
+
+html.theme-dark .quick-links-separator {
+	background-color: #363a45;
+}
+
+/* Make sure parent container is positioned */
+.overlayEnd-RsFlttSS {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
