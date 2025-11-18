@@ -44,7 +44,7 @@ function initQuickLinks() {
 					});
 
 				const rect = menuButton.getBoundingClientRect();
-				popover.style.top = `${rect.bottom - 25}px`;
+				popover.style.top = `${rect.bottom}px`;
 				popover.style.right = `${window.innerWidth - rect.right + 20}px`;
 
 				popover.classList.toggle("active");
@@ -85,22 +85,25 @@ function generateMenuHTML(symbolShort, symbolFull) {
 	const marketType = isFutures ? "Futures" : "Spot";
 
 	return `
+		<div class="quick-links-item">
+			<span>${symbolShort}</span>
+		</div>
 		<div class="quick-links-separator"></div>
 		<div class="quick-links-item" data-url="${binanceUrl}">
-			<img src="https://bin.bnbstatic.com/static/images/common/favicon.ico" class="quick-links-icon" onerror="this.style.display='none'">
+			<img src="https://bin.bnbstatic.com/static/images/common/favicon.ico" class="quick-links-icon">
 			<span>Binance ${marketType}</span>
 		</div>
 		<div class="quick-links-item" data-url="${bybitUrl}">
-			<img src="https://www.bybit.com/favicon.ico" class="quick-links-icon" onerror="this.style.display='none'">
+			<img src="https://www.bybit.com/favicon.ico" class="quick-links-icon">
 			<span>Bybit ${marketType}</span>
 		</div>
 		<div class="quick-links-separator"></div>
 		<div class="quick-links-item" data-url="https://www.coinglass.com/tv/Binance_${tradingPair}">
-			<img src="https://www.coinglass.com/favicon.ico" class="quick-links-icon" onerror="this.style.display='none'">
+			<img src="https://www.coinglass.com/favicon.ico" class="quick-links-icon">
 			<span>CoinGlass Chart</span>
 		</div>
 		<div class="quick-links-item" data-url="https://www.coinglass.com/pro/futures/LiquidationHeatMap?coin=${cleanSymbol}">
-			<img src="https://www.coinglass.com/favicon.ico" class="quick-links-icon" onerror="this.style.display='none'">
+			<img src="https://www.coinglass.com/favicon.ico" class="quick-links-icon">
 			<span>Liquidations Heatmap</span>
 		</div>
 	`;
