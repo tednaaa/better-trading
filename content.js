@@ -51,7 +51,7 @@ function initQuickLinks() {
 			// Position the popover near the button
 			const rect = menuButton.getBoundingClientRect();
 			popover.style.top = `${rect.bottom + 4}px`;
-			popover.style.right = `${window.innerWidth - rect.right}px`;
+			popover.style.right = `${window.innerWidth - rect.right + 20}px`;
 
 			popover.classList.toggle("active");
 		});
