@@ -97,7 +97,7 @@ function generateMenuHTML(symbolShort, symbolFull) {
 
 	return `
     <div class="quick-links-item" data-url="${binanceUrl}">
-      <img src="https://www.binance.com/favicon.ico" class="quick-links-icon" onerror="this.style.display='none'">
+      <img src="https://bin.bnbstatic.com/static/images/common/favicon.ico" class="quick-links-icon" onerror="this.style.display='none'">
       <span>Binance ${marketType}</span>
     </div>
     <div class="quick-links-item" data-url="${bybitUrl}">
