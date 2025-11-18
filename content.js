@@ -89,15 +89,6 @@ function generateMenuHTML(symbolShort, symbolFull) {
 			<span>${symbolShort}</span>
 		</div>
 		<div class="quick-links-separator"></div>
-		<div class="quick-links-item" data-url="${binanceUrl}">
-			<img src="https://bin.bnbstatic.com/static/images/common/favicon.ico" class="quick-links-icon">
-			<span>Binance ${marketType}</span>
-		</div>
-		<div class="quick-links-item" data-url="${bybitUrl}">
-			<img src="https://www.bybit.com/favicon.ico" class="quick-links-icon">
-			<span>Bybit ${marketType}</span>
-		</div>
-		<div class="quick-links-separator"></div>
 		<div class="quick-links-item" data-url="https://www.coinglass.com/tv/Binance_${tradingPair}">
 			<img src="https://www.coinglass.com/favicon.ico" class="quick-links-icon">
 			<span>CoinGlass Chart</span>
@@ -105,6 +96,15 @@ function generateMenuHTML(symbolShort, symbolFull) {
 		<div class="quick-links-item" data-url="https://www.coinglass.com/pro/futures/LiquidationHeatMap?coin=${cleanSymbol}">
 			<img src="https://www.coinglass.com/favicon.ico" class="quick-links-icon">
 			<span>Liquidations Heatmap</span>
+		</div>
+		<div class="quick-links-separator"></div>
+		<div class="quick-links-item" data-url="${binanceUrl}">
+			<img src="https://bin.bnbstatic.com/static/images/common/favicon.ico" class="quick-links-icon">
+			<span>Binance ${marketType}</span>
+		</div>
+		<div class="quick-links-item" data-url="${bybitUrl}">
+			<img src="https://www.bybit.com/favicon.ico" class="quick-links-icon">
+			<span>Bybit ${marketType}</span>
 		</div>
 	`;
 }
