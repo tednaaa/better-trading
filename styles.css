@@ -1,40 +1,58 @@
 /* styles.css */
 
-/* 3-dot menu button */
+/* Parent container - ensure it has proper stacking */
+.overlayEnd-RsFlttSS {
+	position: relative !important;
+	display: flex !important;
+	align-items: center;
+	z-index: 100 !important;
+}
+
+/* 3-dot menu button - ultra high z-index */
 .quick-links-button {
-	display: inline-flex;
+	display: inline-flex !important;
 	align-items: center;
 	justify-content: center;
 	width: 28px;
 	height: 28px;
 	margin-right: 4px;
+	padding: 0;
 	cursor: pointer;
+	border: none !important;
+	background: transparent !important;
 	border-radius: 4px;
 	color: #787b86;
 	transition:
 		background-color 0.2s,
 		color 0.2s;
+	position: relative !important;
+	z-index: 100000 !important;
+	outline: none;
 }
 
 .quick-links-button:hover {
-	background-color: rgba(120, 123, 134, 0.1);
+	background-color: rgba(120, 123, 134, 0.1) !important;
 	color: #2962ff;
+}
+
+.quick-links-button:focus {
+	outline: none;
 }
 
 .quick-links-button svg {
 	pointer-events: none;
 }
 
-/* Popover container */
+/* Popover container - Maximum z-index */
 .quick-links-popover {
 	display: none;
-	position: fixed;
+	position: fixed !important;
 	background: #ffffff;
 	border: 1px solid #e0e3eb;
 	border-radius: 6px;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 	min-width: 220px;
-	z-index: 999999;
+	z-index: 2147483647 !important;
 	padding: 4px 0;
 }
 
@@ -42,11 +60,11 @@
 html.theme-dark .quick-links-popover {
 	background: #1e222d;
 	border-color: #363a45;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+	box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
 }
 
 .quick-links-popover.active {
-	display: block;
+	display: block !important;
 }
 
 /* Menu item */
@@ -61,6 +79,7 @@ html.theme-dark .quick-links-popover {
 		-apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu,
 		sans-serif;
 	transition: background-color 0.2s;
+	user-select: none;
 }
 
 html.theme-dark .quick-links-item {
@@ -92,11 +111,4 @@ html.theme-dark .quick-links-item:hover {
 
 html.theme-dark .quick-links-separator {
 	background-color: #363a45;
-}
-
-/* Make sure parent container is positioned */
-.overlayEnd-RsFlttSS {
-	position: relative;
-	display: flex;
-	align-items: center;
 }

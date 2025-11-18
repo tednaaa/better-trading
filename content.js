@@ -1,22 +1,18 @@
-// content.js
-console.log("TradingView Quick Links extension loaded!");
-console.log("Current URL:", window.location.href);
+const processedRows = new WeakSet();
 
-// Wait for TradingView to load
 function initQuickLinks() {
-	console.log("initQuickLinks called!");
 	const symbolRows = document.querySelectorAll("[data-symbol-short]");
-	console.log("Found symbol rows:", symbolRows.length);
+	let newRowsProcessed = 0;
 
 	symbolRows.forEach((row) => {
-		// Skip if already processed
-		if (row.querySelector(".quick-links-button")) return;
+		if (processedRows.has(row)) return;
 
 		const symbolShort = row.getAttribute("data-symbol-short");
 		const symbolFull = row.getAttribute("data-symbol-full");
 
-		// Create the 3-dot button
-		const menuButton = document.createElement("span");
+		if (!symbolShort) return;
+
+		const menuButton = document.createElement("button");
 		menuButton.className = "quick-links-button";
 		menuButton.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="18" height="18">
@@ -26,69 +22,62 @@ function initQuickLinks() {
       </svg>
     `;
 
-		// Create the popover menu
 		const popover = document.createElement("div");
 		popover.className = "quick-links-popover";
 		popover.innerHTML = generateMenuHTML(symbolShort, symbolFull);
 
-		// Insert button before the remove button
 		const overlayEnd = row.querySelector(".overlayEnd-RsFlttSS");
 		if (overlayEnd) {
+			overlayEnd.style.zIndex = "100";
+			overlayEnd.style.position = "relative";
+
 			overlayEnd.insertBefore(menuButton, overlayEnd.firstChild);
-			// Append popover to body instead of overlayEnd for better positioning
 			document.body.appendChild(popover);
-		}
 
-		// Toggle popover on click
-		menuButton.addEventListener("click", (e) => {
-			e.stopPropagation();
+			menuButton.addEventListener("click", (e) => {
+				e.stopPropagation();
 
-			// Close other popovers
-			document.querySelectorAll(".quick-links-popover.active").forEach((p) => {
-				if (p !== popover) p.classList.remove("active");
+				document
+					.querySelectorAll(".quick-links-popover.active")
+					.forEach((p) => {
+						if (p !== popover) p.classList.remove("active");
+					});
+
+				const rect = menuButton.getBoundingClientRect();
+				popover.style.top = `${rect.bottom + 4}px`;
+				popover.style.right = `${window.innerWidth - rect.right}px`;
+
+				popover.classList.toggle("active");
 			});
 
-			// Position the popover near the button
-			const rect = menuButton.getBoundingClientRect();
-			popover.style.top = `${rect.bottom + 4}px`;
-			popover.style.right = `${window.innerWidth - rect.right + 20}px`;
-
-			popover.classList.toggle("active");
-		});
-
-		// Close popover when clicking outside
-		document.addEventListener("click", (e) => {
-			if (!popover.contains(e.target) && !menuButton.contains(e.target)) {
-				popover.classList.remove("active");
-			}
-		});
+			processedRows.add(row);
+			newRowsProcessed++;
+		}
 	});
+
+	if (newRowsProcessed > 0) {
+		console.debug(`Processed ${newRowsProcessed} new symbol rows`);
+	}
 }
 
 function generateMenuHTML(symbolShort, symbolFull) {
-	// Extract base symbol and determine if it's futures or spot
 	let baseSymbol = symbolShort.replace(".D", "");
 	let isFutures = false;
 
-	// Check if it's a perpetual futures contract (.P suffix)
 	if (baseSymbol.endsWith(".P")) {
 		isFutures = true;
 		baseSymbol = baseSymbol.replace(".P", "");
 	}
 
-	// Remove USDT if present to get clean base symbol
 	const cleanSymbol = baseSymbol.replace("USDT", "");
 	const tradingPair = cleanSymbol + "USDT";
 
-	// Build URLs based on whether it's futures or spot
 	let binanceUrl, bybitUrl;
 
 	if (isFutures) {
-		// Futures trading URLs
 		binanceUrl = `https://www.binance.com/en/futures/${tradingPair}`;
 		bybitUrl = `https://www.bybit.com/trade/usdt/${tradingPair}`;
 	} else {
-		// Spot trading URLs
 		binanceUrl = `https://www.binance.com/en/trade/${tradingPair}`;
 		bybitUrl = `https://www.bybit.com/en/trade/spot/${tradingPair}`;
 	}
@@ -125,7 +114,6 @@ function generateMenuHTML(symbolShort, symbolFull) {
   `;
 }
 
-// Handle link clicks
 document.addEventListener("click", (e) => {
 	const item = e.target.closest(".quick-links-item");
 	if (item) {
@@ -133,35 +121,60 @@ document.addEventListener("click", (e) => {
 		if (url) {
 			window.open(url, "_blank");
 		}
+		return;
+	}
+
+	// Close popovers when clicking outside
+	if (
+		!e.target.closest(".quick-links-button") &&
+		!e.target.closest(".quick-links-popover")
+	) {
+		document.querySelectorAll(".quick-links-popover.active").forEach((p) => {
+			p.classList.remove("active");
+		});
 	}
 });
 
-// Initialize and watch for new symbols added
-console.log("Starting initial setup...");
-initQuickLinks();
+setTimeout(() => {
+	console.debug("Running initial setup...");
+	initQuickLinks();
+}, 1000);
 
-// Debounce function to prevent too many calls
 let debounceTimer;
 function debouncedInit() {
 	clearTimeout(debounceTimer);
 	debounceTimer = setTimeout(() => {
 		initQuickLinks();
-	}, 500);
+	}, 300);
 }
 
-// Use MutationObserver to catch dynamically added symbols
-console.log("Setting up MutationObserver...");
-const observer = new MutationObserver(() => {
-	debouncedInit();
+// Optimized MutationObserver - only watch for new symbol rows
+const observer = new MutationObserver((mutations) => {
+	let shouldInit = false;
+
+	for (const mutation of mutations) {
+		// Check if any added nodes contain or are symbol rows
+		if (mutation.addedNodes.length > 0) {
+			for (const node of mutation.addedNodes) {
+				if (node.nodeType === 1) {
+					// Element node
+					// Check if the node itself or any descendant has data-symbol-short
+					if (
+						node.hasAttribute?.("data-symbol-short") ||
+						node.querySelector?.("[data-symbol-short]")
+					) {
+						shouldInit = true;
+						break;
+					}
+				}
+			}
+		}
+		if (shouldInit) break;
+	}
+
+	if (shouldInit) {
+		debouncedInit();
+	}
 });
 
-observer.observe(document.body, {
-	childList: true,
-	subtree: true,
-});
-
-// Re-init every 10 seconds as backup (TradingView is heavily dynamic)
-console.log("Setting up interval timer...");
-setInterval(() => {
-	initQuickLinks();
-}, 10000);
+observer.observe(document.body, { childList: true, subtree: true });
