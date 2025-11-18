@@ -44,8 +44,8 @@ function initQuickLinks() {
 					});
 
 				const rect = menuButton.getBoundingClientRect();
-				popover.style.top = `${rect.bottom + 4}px`;
-				popover.style.right = `${window.innerWidth - rect.right}px`;
+				popover.style.top = `${rect.bottom - 25}px`;
+				popover.style.right = `${window.innerWidth - rect.right + 20}px`;
 
 				popover.classList.toggle("active");
 			});
@@ -98,18 +98,9 @@ function generateMenuHTML(symbolShort, symbolFull) {
       <img src="https://www.coinglass.com/favicon.ico" class="quick-links-icon" onerror="this.style.display='none'">
       <span>CoinGlass Chart</span>
     </div>
-    <div class="quick-links-item" data-url="https://www.coinglass.com/LiquidationData">
+    <div class="quick-links-item" data-url="https://www.coinglass.com/pro/futures/LiquidationHeatMap?coin=${cleanSymbol}">
       <img src="https://www.coinglass.com/favicon.ico" class="quick-links-icon" onerror="this.style.display='none'">
-      <span>Check Liquidations</span>
-    </div>
-    <div class="quick-links-item" data-url="https://www.coinglass.com/pro/futures/Footprint">
-      <img src="https://www.coinglass.com/favicon.ico" class="quick-links-icon" onerror="this.style.display='none'">
-      <span>Check Footprint</span>
-    </div>
-    <div class="quick-links-separator"></div>
-    <div class="quick-links-item" data-url="https://coinmarketcap.com/currencies/${cleanSymbol.toLowerCase()}/">
-      <img src="https://coinmarketcap.com/favicon.ico" class="quick-links-icon" onerror="this.style.display='none'">
-      <span>CoinMarketCap Info</span>
+      <span>Liquidations Heatmap</span>
     </div>
   `;
 }
