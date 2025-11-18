@@ -112,3 +112,7 @@ html.theme-dark .quick-links-item:hover {
 html.theme-dark .quick-links-separator {
 	background-color: #363a45;
 }
+
+.lastItem-RsFlttSS {
+	justify-content: center !important;
+}
