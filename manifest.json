@@ -4,6 +4,13 @@
   "version": "1.0.0",
   "description": "Improves UI/UX for Traders",
 
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{c097f8f9-aec1-43cf-b6da-a88eff70a918}",
+      "data_collection_permissions": { "required": ["none"] }
+    }
+  },
+
   "content_scripts": [
     {
       "matches": ["*://*.tradingview.com/*", "*://*.coinglass.com/*"],
