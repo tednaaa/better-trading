@@ -34,8 +34,12 @@ function initQuickLinks() {
 			overlayEnd.insertBefore(menuButton, overlayEnd.firstChild);
 			document.body.appendChild(popover);
 
-			menuButton.addEventListener("click", (e) => {
-				e.stopPropagation();
+			let hideTimeout;
+			let isHoveringButton = false;
+			let isHoveringPopover = false;
+
+			const showPopover = () => {
+				clearTimeout(hideTimeout);
 
 				document
 					.querySelectorAll(".quick-links-popover.active")
@@ -47,7 +51,45 @@ function initQuickLinks() {
 				popover.style.top = `${rect.bottom}px`;
 				popover.style.right = `${window.innerWidth - rect.right + 20}px`;
 
-				popover.classList.toggle("active");
+				popover.classList.add("active");
+			};
+
+			const hidePopover = () => {
+				hideTimeout = setTimeout(() => {
+					if (!isHoveringButton && !isHoveringPopover) {
+						popover.classList.remove("active");
+					}
+				}, 200);
+			};
+
+			menuButton.addEventListener("mouseenter", () => {
+				isHoveringButton = true;
+				showPopover();
+			});
+
+			menuButton.addEventListener("mouseleave", () => {
+				isHoveringButton = false;
+				hidePopover();
+			});
+
+			popover.addEventListener("mouseenter", () => {
+				isHoveringPopover = true;
+				clearTimeout(hideTimeout);
+			});
+
+			popover.addEventListener("mouseleave", () => {
+				isHoveringPopover = false;
+				hidePopover();
+			});
+
+			menuButton.addEventListener("click", (e) => {
+				e.stopPropagation();
+
+				if (popover.classList.contains("active")) {
+					popover.classList.remove("active");
+				} else {
+					showPopover();
+				}
 			});
 
 			processedRows.add(row);
@@ -109,17 +151,8 @@ function generateMenuHTML(symbolShort, symbolFull) {
 	`;
 }
 
+// Close popovers when clicking outside
 document.addEventListener("click", (e) => {
-	const item = e.target.closest(".quick-links-item");
-	if (item) {
-		const url = item.getAttribute("data-url");
-		if (url) {
-			window.open(url, "_blank");
-		}
-		return;
-	}
-
-	// Close popovers when clicking outside
 	if (
 		!e.target.closest(".quick-links-button") &&
 		!e.target.closest(".quick-links-popover")
