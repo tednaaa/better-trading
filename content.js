@@ -206,3 +206,102 @@ const observer = new MutationObserver((mutations) => {
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
+
+// ============================================
+// Coinglass TV Page Improvements
+// ============================================
+
+function initCoinglassTVButton() {
+	// Only run on Coinglass TV pages
+	if (
+		!window.location.hostname.includes("coinglass.com") ||
+		!window.location.pathname.includes("/tv")
+	) {
+		return;
+	}
+
+	// Check if button already exists
+	if (document.querySelector(".liquidations-quick-link")) {
+		return;
+	}
+
+	// Find the header container
+	const tvHeader = document.querySelector(".tv-head-item.css-fhzvlw");
+	if (!tvHeader) {
+		return;
+	}
+
+	// Extract the trading pair from the page
+	// Look for the button that shows the exchange and pair (e.g., "Binance ALCHUSDT")
+	const pairButton = tvHeader.querySelector('button[type="button"]');
+	if (!pairButton) {
+		return;
+	}
+
+	const pairText = pairButton.textContent.trim();
+	// Extract symbol (e.g., "Binance ALCHUSDT" -> "ALCH")
+	const match = pairText.match(/(?:Binance|Bybit|OKX)\s+(\w+?)USDT/i);
+	if (!match) {
+		return;
+	}
+
+	const cleanSymbol = match[1]; // e.g., "ALCH"
+
+	// Create separator
+	const separator = document.createElement("hr");
+	separator.className =
+		"MuiDivider-root MuiDivider-middle MuiDivider-vertical MuiDivider-flexItem css-16tu5e3";
+
+	// Create liquidations link button
+	const liqButton = document.createElement("a");
+	liqButton.className =
+		"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium liquidations-quick-link css-1jhxbfy";
+	liqButton.href = `https://www.coinglass.com/pro/futures/LiquidationHeatMap?coin=${cleanSymbol}`;
+	liqButton.target = "_blank";
+	liqButton.style.cssText = "text-decoration: none; color: inherit;";
+	liqButton.innerHTML = `
+		<span>Liquidations</span>
+		<span class="MuiTouchRipple-root css-w0pj6f"></span>
+	`;
+
+	// Insert at the end of the header
+	tvHeader.appendChild(separator);
+	tvHeader.appendChild(liqButton);
+
+	console.debug(`Added liquidations button for ${cleanSymbol}`);
+}
+
+// Initialize for Coinglass TV
+if (window.location.hostname.includes("coinglass.com")) {
+	setTimeout(() => {
+		initCoinglassTVButton();
+	}, 1500);
+
+	// Re-check when symbol changes (watch for URL changes or DOM updates)
+	let lastPair = "";
+	setInterval(() => {
+		const pairButton = document.querySelector(
+			'.tv-head-item.css-fhzvlw button[type="button"]',
+		);
+		if (pairButton) {
+			const currentPair = pairButton.textContent.trim();
+			if (currentPair !== lastPair) {
+				lastPair = currentPair;
+				// Remove old button
+				const oldButton = document.querySelector(".liquidations-quick-link");
+				if (oldButton) {
+					const prevSeparator = oldButton.previousElementSibling;
+					if (
+						prevSeparator &&
+						prevSeparator.classList.contains("MuiDivider-root")
+					) {
+						prevSeparator.remove();
+					}
+					oldButton.remove();
+				}
+				// Add new button
+				setTimeout(() => initCoinglassTVButton(), 100);
+			}
+		}
+	}, 2000);
+}
