@@ -1,6 +1,11 @@
+const tradingviewURL = "tradingview.com";
+const coinglassURL = "coinglass.com";
+
 const processedRows = new WeakSet();
 
-function initQuickLinks() {
+function initTradingViewQuickLinks() {
+	if (!window.location.hostname.includes(tradingviewURL)) return;
+
 	const symbolRows = document.querySelectorAll("[data-symbol-short]");
 	let newRowsProcessed = 0;
 
@@ -48,7 +53,7 @@ function initQuickLinks() {
 					});
 
 				const rect = menuButton.getBoundingClientRect();
-				popover.style.top = `${rect.bottom}px`;
+				popover.style.top = `${rect.bottom - 30}px`;
 				popover.style.right = `${window.innerWidth - rect.right + 20}px`;
 
 				popover.classList.add("active");
@@ -151,7 +156,6 @@ function generateMenuHTML(symbolShort, symbolFull) {
 	`;
 }
 
-// Close popovers when clicking outside
 document.addEventListener("click", (e) => {
 	if (
 		!e.target.closest(".quick-links-button") &&
@@ -163,46 +167,113 @@ document.addEventListener("click", (e) => {
 	}
 });
 
-setTimeout(() => {
-	console.debug("Running initial setup...");
-	initQuickLinks();
-}, 1000);
-
-let debounceTimer;
-function debouncedInit() {
-	clearTimeout(debounceTimer);
-	debounceTimer = setTimeout(() => {
-		initQuickLinks();
-	}, 300);
+if (window.location.hostname.includes(tradingviewURL)) {
+	setTimeout(initTradingViewQuickLinks, 1000);
 }
 
-// Optimized MutationObserver - only watch for new symbol rows
-const observer = new MutationObserver((mutations) => {
-	let shouldInit = false;
+let debounceTimer;
+function debouncedTradingViewInit() {
+	clearTimeout(debounceTimer);
+	debounceTimer = setTimeout(initTradingViewQuickLinks, 300);
+}
 
-	for (const mutation of mutations) {
-		// Check if any added nodes contain or are symbol rows
-		if (mutation.addedNodes.length > 0) {
-			for (const node of mutation.addedNodes) {
-				if (node.nodeType === 1) {
-					// Element node
-					// Check if the node itself or any descendant has data-symbol-short
-					if (
-						node.hasAttribute?.("data-symbol-short") ||
-						node.querySelector?.("[data-symbol-short]")
-					) {
-						shouldInit = true;
-						break;
+if (window.location.hostname.includes(tradingviewURL)) {
+	const observer = new MutationObserver((mutations) => {
+		let shouldInit = false;
+
+		for (const mutation of mutations) {
+			if (mutation.addedNodes.length > 0) {
+				for (const node of mutation.addedNodes) {
+					if (node.nodeType === 1) {
+						if (
+							node.hasAttribute?.("data-symbol-short") ||
+							node.querySelector?.("[data-symbol-short]")
+						) {
+							shouldInit = true;
+							break;
+						}
 					}
 				}
 			}
+			if (shouldInit) break;
 		}
-		if (shouldInit) break;
-	}
 
-	if (shouldInit) {
-		debouncedInit();
-	}
-});
+		if (shouldInit) {
+			debouncedTradingViewInit();
+		}
+	});
 
-observer.observe(document.body, { childList: true, subtree: true });
+	observer.observe(document.body, { childList: true, subtree: true });
+}
+
+function initCoinglassTVButton() {
+	if (
+		!window.location.hostname.includes(coinglassURL) ||
+		!window.location.pathname.includes("/tv")
+	)
+		return;
+
+	if (document.querySelector(".liquidations-quick-link")) return;
+
+	const tvHeader = document.querySelector(".tv-head-item.css-fhzvlw");
+	if (!tvHeader) return;
+
+	const pairButton = tvHeader.querySelector('button[type="button"]');
+	if (!pairButton) return;
+
+	const pairText = pairButton.textContent.trim();
+	const match = pairText.match(/(?:Binance|Bybit|OKX)\s+(\w+?)USDT/i);
+	if (!match) return;
+
+	const cleanSymbol = match[1];
+
+	const separator = document.createElement("hr");
+	separator.className =
+		"MuiDivider-root MuiDivider-middle MuiDivider-vertical MuiDivider-flexItem css-16tu5e3";
+
+	const liquidationHeatmapButton = document.createElement("a");
+	liquidationHeatmapButton.className =
+		"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium liquidations-quick-link css-1jhxbfy";
+	liquidationHeatmapButton.href = `https://www.coinglass.com/pro/futures/LiquidationHeatMap?coin=${cleanSymbol}`;
+	liquidationHeatmapButton.target = "_blank";
+	liquidationHeatmapButton.style.cssText =
+		"text-decoration: none; color: inherit;";
+	liquidationHeatmapButton.innerHTML = `
+		<span>Liq Heatmap</span>
+		<span class="MuiTouchRipple-root css-w0pj6f"></span>
+	`;
+
+	tvHeader.appendChild(separator);
+	tvHeader.appendChild(liquidationHeatmapButton);
+
+	console.debug(`Added liquidations button for ${cleanSymbol}`);
+}
+
+if (window.location.hostname.includes(coinglassURL)) {
+	setTimeout(initCoinglassTVButton, 1500);
+
+	let lastPair = "";
+	setInterval(() => {
+		const pairButton = document.querySelector(
+			'.tv-head-item.css-fhzvlw button[type="button"]',
+		);
+		if (pairButton) {
+			const currentPair = pairButton.textContent.trim();
+			if (currentPair !== lastPair) {
+				lastPair = currentPair;
+				const oldButton = document.querySelector(".liquidations-quick-link");
+				if (oldButton) {
+					const prevSeparator = oldButton.previousElementSibling;
+					if (
+						prevSeparator &&
+						prevSeparator.classList.contains("MuiDivider-root")
+					) {
+						prevSeparator.remove();
+					}
+					oldButton.remove();
+				}
+				setTimeout(() => initCoinglassTVButton(), 100);
+			}
+		}
+	}, 2000);
+}
