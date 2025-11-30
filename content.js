@@ -231,20 +231,17 @@ function initCoinglassTVButton() {
 	separator.className =
 		"MuiDivider-root MuiDivider-middle MuiDivider-vertical MuiDivider-flexItem css-16tu5e3";
 
-	const liquidationHeatmapButton = document.createElement("a");
-	liquidationHeatmapButton.className =
-		"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium liquidations-quick-link css-1jhxbfy";
-	liquidationHeatmapButton.href = `https://www.coinglass.com/pro/futures/LiquidationHeatMap?coin=${cleanSymbol}`;
-	liquidationHeatmapButton.target = "_blank";
-	liquidationHeatmapButton.style.cssText =
-		"text-decoration: none; color: inherit;";
-	liquidationHeatmapButton.innerHTML = `
-		<span>Liq Heatmap</span>
-		<span class="MuiTouchRipple-root css-w0pj6f"></span>
+	const liquidationHeatmapButton = `
+		<a class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium liquidations-quick-link css-1jhxbfy"
+		   href="https://www.coinglass.com/pro/futures/LiquidationHeatMap?coin=${cleanSymbol}"
+		   target="_blank"
+	  >
+			Liq Heatmap
+		</a>
 	`;
 
 	tvHeader.appendChild(separator);
-	tvHeader.appendChild(liquidationHeatmapButton);
+	tvHeader.insertAdjacentHTML("beforeend", liquidationHeatmapButton);
 
 	console.debug(`Added liquidations button for ${cleanSymbol}`);
 }
