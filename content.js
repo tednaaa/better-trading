@@ -1,6 +1,11 @@
+const tradingviewURL = "tradingview.com";
+const coinglassURL = "coinglass.com";
+
 const processedRows = new WeakSet();
 
-function initQuickLinks() {
+function initTradingViewQuickLinks() {
+	if (!window.location.hostname.includes(tradingviewURL)) return;
+
 	const symbolRows = document.querySelectorAll("[data-symbol-short]");
 	let newRowsProcessed = 0;
 
@@ -48,7 +53,7 @@ function initQuickLinks() {
 					});
 
 				const rect = menuButton.getBoundingClientRect();
-				popover.style.top = `${rect.bottom}px`;
+				popover.style.top = `${rect.bottom - 30}px`;
 				popover.style.right = `${window.innerWidth - rect.right + 20}px`;
 
 				popover.classList.add("active");
@@ -151,7 +156,6 @@ function generateMenuHTML(symbolShort, symbolFull) {
 	`;
 }
 
-// Close popovers when clicking outside
 document.addEventListener("click", (e) => {
 	if (
 		!e.target.closest(".quick-links-button") &&
@@ -163,121 +167,91 @@ document.addEventListener("click", (e) => {
 	}
 });
 
-setTimeout(() => {
-	console.debug("Running initial setup...");
-	initQuickLinks();
-}, 1000);
-
-let debounceTimer;
-function debouncedInit() {
-	clearTimeout(debounceTimer);
-	debounceTimer = setTimeout(() => {
-		initQuickLinks();
-	}, 300);
+if (window.location.hostname.includes(tradingviewURL)) {
+	setTimeout(initTradingViewQuickLinks, 1000);
 }
 
-// Optimized MutationObserver - only watch for new symbol rows
-const observer = new MutationObserver((mutations) => {
-	let shouldInit = false;
+let debounceTimer;
+function debouncedTradingViewInit() {
+	clearTimeout(debounceTimer);
+	debounceTimer = setTimeout(initTradingViewQuickLinks, 300);
+}
 
-	for (const mutation of mutations) {
-		// Check if any added nodes contain or are symbol rows
-		if (mutation.addedNodes.length > 0) {
-			for (const node of mutation.addedNodes) {
-				if (node.nodeType === 1) {
-					// Element node
-					// Check if the node itself or any descendant has data-symbol-short
-					if (
-						node.hasAttribute?.("data-symbol-short") ||
-						node.querySelector?.("[data-symbol-short]")
-					) {
-						shouldInit = true;
-						break;
+if (window.location.hostname.includes(tradingviewURL)) {
+	const observer = new MutationObserver((mutations) => {
+		let shouldInit = false;
+
+		for (const mutation of mutations) {
+			if (mutation.addedNodes.length > 0) {
+				for (const node of mutation.addedNodes) {
+					if (node.nodeType === 1) {
+						if (
+							node.hasAttribute?.("data-symbol-short") ||
+							node.querySelector?.("[data-symbol-short]")
+						) {
+							shouldInit = true;
+							break;
+						}
 					}
 				}
 			}
+			if (shouldInit) break;
 		}
-		if (shouldInit) break;
-	}
 
-	if (shouldInit) {
-		debouncedInit();
-	}
-});
+		if (shouldInit) {
+			debouncedTradingViewInit();
+		}
+	});
 
-observer.observe(document.body, { childList: true, subtree: true });
-
-// ============================================
-// Coinglass TV Page Improvements
-// ============================================
+	observer.observe(document.body, { childList: true, subtree: true });
+}
 
 function initCoinglassTVButton() {
-	// Only run on Coinglass TV pages
 	if (
-		!window.location.hostname.includes("coinglass.com") ||
+		!window.location.hostname.includes(coinglassURL) ||
 		!window.location.pathname.includes("/tv")
-	) {
+	)
 		return;
-	}
 
-	// Check if button already exists
-	if (document.querySelector(".liquidations-quick-link")) {
-		return;
-	}
+	if (document.querySelector(".liquidations-quick-link")) return;
 
-	// Find the header container
 	const tvHeader = document.querySelector(".tv-head-item.css-fhzvlw");
-	if (!tvHeader) {
-		return;
-	}
+	if (!tvHeader) return;
 
-	// Extract the trading pair from the page
-	// Look for the button that shows the exchange and pair (e.g., "Binance ALCHUSDT")
 	const pairButton = tvHeader.querySelector('button[type="button"]');
-	if (!pairButton) {
-		return;
-	}
+	if (!pairButton) return;
 
 	const pairText = pairButton.textContent.trim();
-	// Extract symbol (e.g., "Binance ALCHUSDT" -> "ALCH")
 	const match = pairText.match(/(?:Binance|Bybit|OKX)\s+(\w+?)USDT/i);
-	if (!match) {
-		return;
-	}
+	if (!match) return;
 
-	const cleanSymbol = match[1]; // e.g., "ALCH"
+	const cleanSymbol = match[1];
 
-	// Create separator
 	const separator = document.createElement("hr");
 	separator.className =
 		"MuiDivider-root MuiDivider-middle MuiDivider-vertical MuiDivider-flexItem css-16tu5e3";
 
-	// Create liquidations link button
-	const liqButton = document.createElement("a");
-	liqButton.className =
+	const liquidationHeatmapButton = document.createElement("a");
+	liquidationHeatmapButton.className =
 		"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium liquidations-quick-link css-1jhxbfy";
-	liqButton.href = `https://www.coinglass.com/pro/futures/LiquidationHeatMap?coin=${cleanSymbol}`;
-	liqButton.target = "_blank";
-	liqButton.style.cssText = "text-decoration: none; color: inherit;";
-	liqButton.innerHTML = `
-		<span>Liquidations</span>
+	liquidationHeatmapButton.href = `https://www.coinglass.com/pro/futures/LiquidationHeatMap?coin=${cleanSymbol}`;
+	liquidationHeatmapButton.target = "_blank";
+	liquidationHeatmapButton.style.cssText =
+		"text-decoration: none; color: inherit;";
+	liquidationHeatmapButton.innerHTML = `
+		<span>Liq Heatmap</span>
 		<span class="MuiTouchRipple-root css-w0pj6f"></span>
 	`;
 
-	// Insert at the end of the header
 	tvHeader.appendChild(separator);
-	tvHeader.appendChild(liqButton);
+	tvHeader.appendChild(liquidationHeatmapButton);
 
 	console.debug(`Added liquidations button for ${cleanSymbol}`);
 }
 
-// Initialize for Coinglass TV
-if (window.location.hostname.includes("coinglass.com")) {
-	setTimeout(() => {
-		initCoinglassTVButton();
-	}, 1500);
+if (window.location.hostname.includes(coinglassURL)) {
+	setTimeout(initCoinglassTVButton, 1500);
 
-	// Re-check when symbol changes (watch for URL changes or DOM updates)
 	let lastPair = "";
 	setInterval(() => {
 		const pairButton = document.querySelector(
@@ -287,7 +261,6 @@ if (window.location.hostname.includes("coinglass.com")) {
 			const currentPair = pairButton.textContent.trim();
 			if (currentPair !== lastPair) {
 				lastPair = currentPair;
-				// Remove old button
 				const oldButton = document.querySelector(".liquidations-quick-link");
 				if (oldButton) {
 					const prevSeparator = oldButton.previousElementSibling;
@@ -299,7 +272,6 @@ if (window.location.hostname.includes("coinglass.com")) {
 					}
 					oldButton.remove();
 				}
-				// Add new button
 				setTimeout(() => initCoinglassTVButton(), 100);
 			}
 		}
