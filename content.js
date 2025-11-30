@@ -206,6 +206,78 @@ if (window.location.hostname.includes(tradingviewURL)) {
 	observer.observe(document.body, { childList: true, subtree: true });
 }
 
+const processedCoinglassRows = new WeakSet();
+
+function initCoinglassMainPageLinks() {
+	const isMainPage = window.location.hostname === "www.coinglass.com";
+	if (!isMainPage) return;
+
+	const tableRows = document.querySelectorAll(
+		".ant-table-tbody tr[data-row-key]",
+	);
+	let newRowsProcessed = 0;
+
+	tableRows.forEach((row) => {
+		if (processedCoinglassRows.has(row)) return;
+
+		let symbolCell = null;
+		let symbolLink = null;
+
+		const cells = row.querySelectorAll("td");
+
+		for (let i = 0; i < cells.length; i++) {
+			const cell = cells[i];
+			const link = cell.querySelector("a");
+
+			if (link && link.textContent.trim()) {
+				const text = link.textContent.trim();
+
+				if (/^[A-Z0-9]{2,10}$/.test(text)) {
+					symbolCell = cell;
+					symbolLink = link;
+					break;
+				}
+			}
+		}
+
+		if (!symbolCell || !symbolLink) return;
+
+		if (symbolCell.querySelector(".coinglass-tv-link")) return;
+
+		const symbolText = symbolLink.textContent.trim();
+		if (!symbolText) return;
+
+		const tradingPair = symbolText + "USDT";
+
+		const tvLink = document.createElement("a");
+		tvLink.className = "coinglass-tv-link";
+		tvLink.href = `https://www.coinglass.com/tv/Binance_${tradingPair}`;
+		tvLink.target = "_blank";
+		tvLink.textContent = "TV";
+		tvLink.onclick = (e) => e.stopPropagation();
+
+		const parentDiv = symbolLink.parentNode;
+		parentDiv.style.display = "flex";
+		parentDiv.style.alignItems = "center";
+		parentDiv.style.gap = "4px";
+		parentDiv.style.width = "fit-content";
+
+		const parentSpan = parentDiv.parentNode;
+		if (parentSpan && parentSpan.classList.contains("ant-table-cell-content")) {
+			parentSpan.style.width = "fit-content";
+		}
+
+		parentDiv.insertBefore(tvLink, symbolLink.nextSibling);
+
+		processedCoinglassRows.add(row);
+		newRowsProcessed++;
+	});
+
+	if (newRowsProcessed > 0) {
+		console.debug(`Processed ${newRowsProcessed} new CoinGlass table rows`);
+	}
+}
+
 function initCoinglassTVButton() {
 	if (
 		!window.location.hostname.includes(coinglassURL) ||
@@ -273,4 +345,63 @@ if (window.location.hostname.includes(coinglassURL)) {
 			}
 		}
 	}, 2000);
+}
+
+if (
+	window.location.hostname.includes(coinglassURL) &&
+	!window.location.pathname.includes("/tv")
+) {
+	let debounceTimerCoinglass;
+	function debouncedCoinglassInit() {
+		clearTimeout(debounceTimerCoinglass);
+		debounceTimerCoinglass = setTimeout(initCoinglassMainPageLinks, 300);
+	}
+
+	function waitForTableAndInit() {
+		const hasDataRows =
+			document.querySelectorAll(".ant-table-tbody tr[data-row-key]").length > 0;
+
+		if (hasDataRows) {
+			initCoinglassMainPageLinks();
+		}
+	}
+
+	let retryCount = 0;
+	const maxRetries = 10;
+	const retryInterval = setInterval(() => {
+		waitForTableAndInit();
+		retryCount++;
+		if (retryCount >= maxRetries) {
+			clearInterval(retryInterval);
+		}
+	}, 500);
+
+	const coinglassObserver = new MutationObserver((mutations) => {
+		let shouldInit = false;
+
+		for (const mutation of mutations) {
+			if (mutation.addedNodes.length > 0) {
+				for (const node of mutation.addedNodes) {
+					if (node.nodeType === 1) {
+						if (
+							node.classList?.contains("ant-table-tbody") ||
+							node.querySelector?.(".ant-table-tbody") ||
+							node.classList?.contains("ant-table-row") ||
+							(node.tagName === "TR" && node.hasAttribute("data-row-key"))
+						) {
+							shouldInit = true;
+							break;
+						}
+					}
+				}
+			}
+			if (shouldInit) break;
+		}
+
+		if (shouldInit) {
+			debouncedCoinglassInit();
+		}
+	});
+
+	coinglassObserver.observe(document.body, { childList: true, subtree: true });
 }
