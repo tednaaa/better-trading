@@ -147,3 +147,10 @@ html[data-theme="dark"] .coinglass-tv-link:hover,
 	background-color: #111b26 !important;
 	color: #69c0ff !important;
 }
+
+/* For coinglass table */
+@media (min-width: 1376px) {
+	.cg-content {
+		max-width: 1800px !important;
+	}
+}
