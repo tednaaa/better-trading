@@ -228,11 +228,10 @@ function initCoinglassMainPageLinks() {
 		for (let i = 0; i < cells.length; i++) {
 			const cell = cells[i];
 			const link = cell.querySelector("a");
+			const textContent = cell.textContent.trim();
 
-			if (link && link.textContent.trim()) {
-				const text = link.textContent.trim();
-
-				if (/^[A-Z0-9]{2,10}$/.test(text)) {
+			if (link && textContent) {
+				if (/^[A-Z0-9]{0,20}$/.test(textContent)) {
 					symbolCell = cell;
 					symbolLink = link;
 					break;
