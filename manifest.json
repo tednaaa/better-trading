@@ -11,6 +11,11 @@
     }
   },
 
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_title": "Better Trading Settings"
+  },
+
   "content_scripts": [
     {
       "matches": ["*://*.tradingview.com/*", "*://*.coinglass.com/*"],
@@ -20,5 +25,5 @@
     }
   ],
 
-  "permissions": ["activeTab"]
+  "permissions": ["storage", "activeTab"]
 }

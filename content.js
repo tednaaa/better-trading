@@ -3,6 +3,43 @@ const coinglassURL = "coinglass.com";
 
 const processedRows = new WeakSet();
 
+let currentSettings = {
+	exchange: "binance",
+};
+
+browser.storage.sync.get({ exchange: "binance" }).then(function (items) {
+	currentSettings = items;
+});
+
+browser.runtime.onMessage.addListener(function (message) {
+	if (message.action === "settingsChanged") {
+		currentSettings = message.settings;
+
+		processedCoinglassRows.clear();
+		const oldLinks = document.querySelectorAll(".coinglass-tv-link");
+		oldLinks.forEach((link) => link.remove());
+
+		setTimeout(() => {
+			initCoinglassMainPageLinks();
+		}, 100);
+	}
+});
+
+function getCoinglassTVUrl(symbolText) {
+	const tradingPair = symbolText + "USDT";
+
+	switch (currentSettings.exchange) {
+		case "bybit":
+			return `https://www.coinglass.com/tv/Bybit_${tradingPair}`;
+		case "bingx":
+			const bingxPair = symbolText + "-USDT";
+			return `https://www.coinglass.com/tv/BingX_${bingxPair}`;
+		case "binance":
+		default:
+			return `https://www.coinglass.com/tv/Binance_${tradingPair}`;
+	}
+}
+
 function initTradingViewQuickLinks() {
 	if (!window.location.hostname.includes(tradingviewURL)) return;
 
@@ -246,11 +283,9 @@ function initCoinglassMainPageLinks() {
 		const symbolText = symbolLink.textContent.trim();
 		if (!symbolText) return;
 
-		const tradingPair = symbolText + "USDT";
-
 		const tvLink = document.createElement("a");
 		tvLink.className = "coinglass-tv-link";
-		tvLink.href = `https://www.coinglass.com/tv/Binance_${tradingPair}`;
+		tvLink.href = getCoinglassTVUrl(symbolText);
 		tvLink.target = "_blank";
 		tvLink.textContent = "TV";
 		tvLink.onclick = (e) => e.stopPropagation();
