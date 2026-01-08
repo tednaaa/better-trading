@@ -40,6 +40,20 @@ function getCoinglassTVUrl(symbolText) {
 	}
 }
 
+function getTradingViewUrl(symbolText) {
+	const tradingPair = symbolText + "USDT.P";
+
+	switch (currentSettings.exchange) {
+		case "bybit":
+			return `https://www.tradingview.com/chart?symbol=Bybit:${tradingPair}`;
+		case "bingx":
+			return `https://www.tradingview.com/chart?symbol=BingX:${tradingPair}`;
+		case "binance":
+		default:
+			return `https://www.tradingview.com/chart?symbol=Binance:${tradingPair}`;
+	}
+}
+
 function initTradingViewQuickLinks() {
 	if (!window.location.hostname.includes(tradingviewURL)) return;
 
@@ -290,6 +304,13 @@ function initCoinglassMainPageLinks() {
 		tvLink.textContent = "TV";
 		tvLink.onclick = (e) => e.stopPropagation();
 
+		const tradingViewLink = document.createElement("a");
+		tradingViewLink.className = "coinglass-tv-link";
+		tradingViewLink.href = getTradingViewUrl(symbolText);
+		tradingViewLink.target = "_blank";
+		tradingViewLink.textContent = "TV";
+		tradingViewLink.onclick = (e) => e.stopPropagation();
+
 		const parentDiv = symbolLink.parentNode;
 		parentDiv.style.display = "flex";
 		parentDiv.style.alignItems = "center";
@@ -302,6 +323,7 @@ function initCoinglassMainPageLinks() {
 		}
 
 		parentDiv.insertBefore(tvLink, symbolLink.nextSibling);
+		parentDiv.insertBefore(tradingViewLink, symbolLink.nextSibling);
 
 		processedCoinglassRows.add(row);
 		newRowsProcessed++;
