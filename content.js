@@ -20,6 +20,12 @@ browser.runtime.onMessage.addListener(function (message) {
 		setTimeout(() => {
 			initCoinglassMainPageLinks();
 		}, 100);
+
+		if (window.location.hostname.includes(tradingviewURL)) {
+			setTimeout(() => {
+				updateTradingViewHeatmapLinks();
+			}, 100);
+		}
 	}
 });
 
@@ -121,42 +127,75 @@ function ensureTradingViewHeatmapLink(widget) {
 
 	let state = watchlistHeatmapState.get(widget);
 	let container = state?.container;
-	let link = state?.link;
+	let heatmapLink = state?.heatmapLink;
+	let chartLink = state?.chartLink;
 
 	if (!container || !container.isConnected) {
 		container = document.createElement("div");
 		container.className = "tv-liq-heatmap-container";
-		header.insertAdjacentElement("afterend", container);
 	}
 
-	if (!link || !link.isConnected) {
-		link = document.createElement("a");
-		link.className = "tv-liq-heatmap-link";
-		link.target = "_blank";
-		link.rel = "noopener noreferrer";
-		link.textContent = "Liq Heatmap";
-		container.appendChild(link);
+	if (header.previousElementSibling !== container) {
+		header.insertAdjacentElement("beforebegin", container);
+	}
+
+	if (!chartLink || !chartLink.isConnected) {
+		chartLink = document.createElement("a");
+		chartLink.className = "tv-coinglass-chart-link";
+		chartLink.target = "_blank";
+		chartLink.rel = "noopener noreferrer";
+		chartLink.textContent = "CoinGlass TV";
+		container.appendChild(chartLink);
+	}
+
+	if (!heatmapLink || !heatmapLink.isConnected) {
+		heatmapLink = document.createElement("a");
+		heatmapLink.className = "tv-liq-heatmap-link";
+		heatmapLink.target = "_blank";
+		heatmapLink.rel = "noopener noreferrer";
+		heatmapLink.textContent = "Liq Heatmap";
+		container.appendChild(heatmapLink);
 	}
 
 	const activeSymbol = getActiveWatchlistSymbol(widget);
 	const coin = extractHeatmapCoin(activeSymbol?.short, activeSymbol?.full);
-	const nextHref = getTradingViewHeatmapUrl(coin);
+	const heatmapHref = getTradingViewHeatmapUrl(coin);
+	const chartHref = coin
+		? getCoinglassTVUrl(coin)
+		: "https://www.coinglass.com/tv";
 
-	if (link.getAttribute("href") !== nextHref) {
-		link.href = nextHref;
+	if (heatmapLink.getAttribute("href") !== heatmapHref) {
+		heatmapLink.href = heatmapHref;
+	}
+
+	if (chartLink.getAttribute("href") !== chartHref) {
+		chartLink.href = chartHref;
 	}
 
 	if (coin) {
-		link.classList.remove("is-disabled");
-		link.removeAttribute("aria-disabled");
-		link.title = `${coin} Liquidation Heatmap`;
+		heatmapLink.classList.remove("is-disabled");
+		heatmapLink.removeAttribute("aria-disabled");
+		heatmapLink.title = `${coin} Liquidation Heatmap`;
+
+		chartLink.classList.remove("is-disabled");
+		chartLink.removeAttribute("aria-disabled");
+		chartLink.title = `${coin} CoinGlass Chart`;
 	} else {
-		link.classList.add("is-disabled");
-		link.setAttribute("aria-disabled", "true");
-		link.title = "Select a crypto symbol to open the heatmap";
+		heatmapLink.classList.add("is-disabled");
+		heatmapLink.setAttribute("aria-disabled", "true");
+		heatmapLink.title = "Select a crypto symbol to open the heatmap";
+
+		chartLink.classList.add("is-disabled");
+		chartLink.setAttribute("aria-disabled", "true");
+		chartLink.title = "Select a crypto symbol to open the chart";
 	}
 
-	watchlistHeatmapState.set(widget, { container, link, lastCoin: coin });
+	watchlistHeatmapState.set(widget, {
+		container,
+		heatmapLink,
+		chartLink,
+		lastCoin: coin,
+	});
 }
 
 function updateTradingViewHeatmapLinks() {
