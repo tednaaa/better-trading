@@ -1,120 +1,45 @@
 /* styles.css */
 
-/* Parent container - ensure it has proper stacking */
-.overlayEnd-RsFlttSS {
-	position: relative !important;
-	display: flex !important;
+/* TradingView watchlist heatmap link */
+.tv-liq-heatmap-container {
+	padding: 6px 8px;
+	display: flex;
 	align-items: center;
-	z-index: 100 !important;
 }
 
-/* 3-dot menu button - ultra high z-index */
-.quick-links-button {
-	display: inline-flex !important;
+.tv-liq-heatmap-link {
+	display: inline-flex;
 	align-items: center;
-	justify-content: center;
-	width: 28px;
-	height: 28px;
-	margin-right: 6px;
-	margin-left: 6px;
-	padding: 0;
-	cursor: pointer;
-	border: none !important;
-	background: transparent !important;
+	font-size: 12px;
+	font-weight: 500;
+	color: #2962ff;
+	text-decoration: none;
+	padding: 4px 8px;
 	border-radius: 4px;
-	color: #787b86;
+	background-color: rgba(41, 98, 255, 0.1);
 	transition:
 		background-color 0.2s,
 		color 0.2s;
-	position: relative !important;
-	z-index: 100000 !important;
-	outline: none;
 }
 
-.quick-links-button:hover {
-	color: #2962ff;
+.tv-liq-heatmap-link:hover {
+	background-color: rgba(41, 98, 255, 0.18);
 }
 
-.quick-links-button:focus {
-	outline: none;
+html.theme-dark .tv-liq-heatmap-link {
+	color: #4c7dff;
+	background-color: rgba(76, 125, 255, 0.18);
 }
 
-.quick-links-button svg {
+html.theme-dark .tv-liq-heatmap-link:hover {
+	background-color: rgba(76, 125, 255, 0.28);
+}
+
+.tv-liq-heatmap-link.is-disabled {
+	color: #8a8f9a;
+	background-color: transparent;
+	cursor: default;
 	pointer-events: none;
-}
-
-/* Popover container - Maximum z-index */
-.quick-links-popover {
-	display: none;
-	position: fixed !important;
-	background: #ffffff;
-	border: 1px solid #e0e3eb;
-	border-radius: 6px;
-	box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-	min-width: 220px;
-	z-index: 2147483647 !important;
-	padding: 4px 0;
-}
-
-/* Dark theme support */
-html.theme-dark .quick-links-popover {
-	background: #1e222d;
-	border-color: #363a45;
-	box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
-}
-
-.quick-links-popover.active {
-	display: block !important;
-}
-
-/* Menu item */
-.quick-links-item {
-	display: flex;
-	align-items: center;
-	padding: 8px 12px;
-	cursor: pointer;
-	color: #131722;
-	font-size: 13px;
-	font-family:
-		-apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu,
-		sans-serif;
-	transition: background-color 0.2s;
-	user-select: none;
-}
-
-html.theme-dark .quick-links-item {
-	color: #d1d4dc;
-}
-
-.quick-links-item:hover {
-	background-color: #f0f3fa;
-}
-
-html.theme-dark .quick-links-item:hover {
-	background-color: #2a2e39;
-}
-
-/* Icon */
-.quick-links-icon {
-	width: 16px;
-	height: 16px;
-	margin-right: 8px;
-	flex-shrink: 0;
-}
-
-/* Separator */
-.quick-links-separator {
-	height: 1px;
-	background-color: #e0e3eb;
-	margin: 4px 0;
-}
-
-html.theme-dark .quick-links-separator {
-	background-color: #363a45;
-}
-
-.lastItem-RsFlttSS {
-	justify-content: center !important;
 }
 
 /* CoinGlass main page TV link */

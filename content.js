@@ -1,8 +1,6 @@
 const tradingviewURL = "tradingview.com";
 const coinglassURL = "coinglass.com";
 
-const processedRows = new WeakSet();
-
 let currentSettings = {
 	exchange: "binance",
 };
@@ -54,207 +52,176 @@ function getTradingViewUrl(symbolText) {
 	}
 }
 
-function initTradingViewQuickLinks() {
-	if (!window.location.hostname.includes(tradingviewURL)) return;
+const watchlistHeatmapState = new WeakMap();
+const watchlistWidgetSelector = '[data-test-id-widget-type="watchlist"]';
+const watchlistSymbolSelector = "[data-symbol-short]";
+const watchlistActiveSelector =
+	'[data-symbol-short][data-active="true"], [data-symbol-short][data-selected="true"]';
 
-	const symbolRows = document.querySelectorAll("[data-symbol-short]");
-	let newRowsProcessed = 0;
+function extractHeatmapCoin(symbolShort, symbolFull) {
+	const candidates = [symbolShort, symbolFull];
+	const suffixes = ["USDT", "USDC", "BUSD", "USD", "PERP"];
 
-	symbolRows.forEach((row) => {
-		if (processedRows.has(row)) return;
+	for (const candidate of candidates) {
+		if (!candidate) continue;
 
-		const symbolShort = row.getAttribute("data-symbol-short");
-		const symbolFull = row.getAttribute("data-symbol-full");
+		let value = candidate.trim().toUpperCase();
+		if (!value) continue;
 
-		if (!symbolShort) return;
-
-		const menuButton = document.createElement("button");
-		menuButton.className = "quick-links-button";
-		menuButton.innerHTML = `
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="18" height="18">
-				<circle cx="3.5" cy="9" r="1.5" fill="currentColor"/>
-				<circle cx="9" cy="9" r="1.5" fill="currentColor"/>
-				<circle cx="14.5" cy="9" r="1.5" fill="currentColor"/>
-			</svg>
-		`;
-
-		const popover = document.createElement("div");
-		popover.className = "quick-links-popover";
-		popover.innerHTML = generateMenuHTML(symbolShort, symbolFull);
-
-		const overlayEnd = row.querySelector(".overlayEnd-RsFlttSS");
-		if (overlayEnd) {
-			overlayEnd.style.zIndex = "100";
-			overlayEnd.style.position = "relative";
-
-			overlayEnd.insertBefore(menuButton, overlayEnd.firstChild);
-			document.body.appendChild(popover);
-
-			let hideTimeout;
-			let isHoveringButton = false;
-			let isHoveringPopover = false;
-
-			const showPopover = () => {
-				clearTimeout(hideTimeout);
-
-				document
-					.querySelectorAll(".quick-links-popover.active")
-					.forEach((p) => {
-						if (p !== popover) p.classList.remove("active");
-					});
-
-				const rect = menuButton.getBoundingClientRect();
-				popover.style.top = `${rect.bottom - 30}px`;
-				popover.style.right = `${window.innerWidth - rect.right + 20}px`;
-
-				popover.classList.add("active");
-			};
-
-			const hidePopover = () => {
-				hideTimeout = setTimeout(() => {
-					if (!isHoveringButton && !isHoveringPopover) {
-						popover.classList.remove("active");
-					}
-				}, 200);
-			};
-
-			menuButton.addEventListener("mouseenter", () => {
-				isHoveringButton = true;
-				showPopover();
-			});
-
-			menuButton.addEventListener("mouseleave", () => {
-				isHoveringButton = false;
-				hidePopover();
-			});
-
-			popover.addEventListener("mouseenter", () => {
-				isHoveringPopover = true;
-				clearTimeout(hideTimeout);
-			});
-
-			popover.addEventListener("mouseleave", () => {
-				isHoveringPopover = false;
-				hidePopover();
-			});
-
-			menuButton.addEventListener("click", (e) => {
-				e.stopPropagation();
-
-				if (popover.classList.contains("active")) {
-					popover.classList.remove("active");
-				} else {
-					showPopover();
-				}
-			});
-
-			processedRows.add(row);
-			newRowsProcessed++;
+		if (value.includes(":")) {
+			value = value.split(":").pop();
 		}
-	});
 
-	if (newRowsProcessed > 0) {
-		console.debug(`Processed ${newRowsProcessed} new symbol rows`);
+		value = value.replace(/\.P$/i, "");
+		value = value.replace(/\.D$/i, "");
+		value = value.replace(/-PERP$/i, "");
+		value = value.replace(/PERP$/i, "");
+		value = value.replace(/[-_]/g, "");
+
+		for (const suffix of suffixes) {
+			if (value.endsWith(suffix)) {
+				value = value.slice(0, -suffix.length);
+				break;
+			}
+		}
+
+		value = value.replace(/[^A-Z0-9]/g, "");
+		if (value) return value;
 	}
+
+	return null;
 }
 
-function generateMenuHTML(symbolShort, symbolFull) {
-	let baseSymbol = symbolShort.replace(".D", "");
-	let isFutures = false;
-
-	if (baseSymbol.endsWith(".P")) {
-		isFutures = true;
-		baseSymbol = baseSymbol.replace(".P", "");
+function getTradingViewHeatmapUrl(coin) {
+	if (!coin) {
+		return "https://www.coinglass.com/pro/futures/LiquidationHeatMap";
 	}
 
-	const cleanSymbol = baseSymbol.replace("USDT", "");
-	const tradingPair = cleanSymbol + "USDT";
+	return `https://www.coinglass.com/pro/futures/LiquidationHeatMap?coin=${encodeURIComponent(
+		coin,
+	)}`;
+}
 
-	let binanceUrl, bybitUrl;
+function getActiveWatchlistSymbol(widget) {
+	const activeRow =
+		widget.querySelector(watchlistActiveSelector) ||
+		widget.querySelector(watchlistSymbolSelector);
 
-	if (isFutures) {
-		binanceUrl = `https://www.binance.com/en/futures/${tradingPair}`;
-		bybitUrl = `https://www.bybit.com/trade/usdt/${tradingPair}`;
+	if (!activeRow) return null;
+
+	return {
+		short: activeRow.getAttribute("data-symbol-short"),
+		full: activeRow.getAttribute("data-symbol-full"),
+	};
+}
+
+function ensureTradingViewHeatmapLink(widget) {
+	const header = widget.querySelector('div[class*="widgetHeader"]');
+	if (!header) return;
+
+	let state = watchlistHeatmapState.get(widget);
+	let container = state?.container;
+	let link = state?.link;
+
+	if (!container || !container.isConnected) {
+		container = document.createElement("div");
+		container.className = "tv-liq-heatmap-container";
+		header.insertAdjacentElement("afterend", container);
+	}
+
+	if (!link || !link.isConnected) {
+		link = document.createElement("a");
+		link.className = "tv-liq-heatmap-link";
+		link.target = "_blank";
+		link.rel = "noopener noreferrer";
+		link.textContent = "Liq Heatmap";
+		container.appendChild(link);
+	}
+
+	const activeSymbol = getActiveWatchlistSymbol(widget);
+	const coin = extractHeatmapCoin(activeSymbol?.short, activeSymbol?.full);
+	const nextHref = getTradingViewHeatmapUrl(coin);
+
+	if (link.getAttribute("href") !== nextHref) {
+		link.href = nextHref;
+	}
+
+	if (coin) {
+		link.classList.remove("is-disabled");
+		link.removeAttribute("aria-disabled");
+		link.title = `${coin} Liquidation Heatmap`;
 	} else {
-		binanceUrl = `https://www.binance.com/en/trade/${tradingPair}`;
-		bybitUrl = `https://www.bybit.com/en/trade/spot/${tradingPair}`;
+		link.classList.add("is-disabled");
+		link.setAttribute("aria-disabled", "true");
+		link.title = "Select a crypto symbol to open the heatmap";
 	}
 
-	const marketType = isFutures ? "Futures" : "Spot";
-
-	return `
-		<div class="quick-links-item">
-			<span>${symbolShort}</span>
-		</div>
-		<div class="quick-links-separator"></div>
-		<a class="quick-links-item" href="https://www.coinglass.com/tv/Binance_${tradingPair}" target="_blank">
-			<img src="https://www.coinglass.com/favicon.ico" class="quick-links-icon">
-			<span>CoinGlass Chart</span>
-		</a>
-		<a class="quick-links-item" href="https://www.coinglass.com/pro/futures/LiquidationHeatMap?coin=${cleanSymbol}" target="_blank">
-			<img src="https://www.coinglass.com/favicon.ico" class="quick-links-icon">
-			<span>Liquidations Heatmap</span>
-		</a>
-		<div class="quick-links-separator"></div>
-		<a class="quick-links-item" href="${binanceUrl}" target="_blank">
-			<img src="https://bin.bnbstatic.com/static/images/common/favicon.ico" class="quick-links-icon">
-			<span>Binance ${marketType}</span>
-		</a>
-		<a class="quick-links-item" href="${bybitUrl}" target="_blank">
-			<img src="https://www.bybit.com/favicon.ico" class="quick-links-icon">
-			<span>Bybit ${marketType}</span>
-		</a>
-	`;
+	watchlistHeatmapState.set(widget, { container, link, lastCoin: coin });
 }
 
-document.addEventListener("click", (e) => {
-	if (
-		!e.target.closest(".quick-links-button") &&
-		!e.target.closest(".quick-links-popover")
-	) {
-		document.querySelectorAll(".quick-links-popover.active").forEach((p) => {
-			p.classList.remove("active");
-		});
-	}
-});
-
-if (window.location.hostname.includes(tradingviewURL)) {
-	setTimeout(initTradingViewQuickLinks, 1000);
+function updateTradingViewHeatmapLinks() {
+	const widgets = document.querySelectorAll(watchlistWidgetSelector);
+	widgets.forEach((widget) => ensureTradingViewHeatmapLink(widget));
 }
 
-let debounceTimer;
-function debouncedTradingViewInit() {
-	clearTimeout(debounceTimer);
-	debounceTimer = setTimeout(initTradingViewQuickLinks, 300);
+let tradingViewHeatmapDebounceTimer;
+function debouncedTradingViewHeatmapInit() {
+	clearTimeout(tradingViewHeatmapDebounceTimer);
+	tradingViewHeatmapDebounceTimer = setTimeout(
+		updateTradingViewHeatmapLinks,
+		250,
+	);
 }
 
 if (window.location.hostname.includes(tradingviewURL)) {
+	setTimeout(updateTradingViewHeatmapLinks, 1000);
+
 	const observer = new MutationObserver((mutations) => {
-		let shouldInit = false;
+		let shouldUpdate = false;
 
 		for (const mutation of mutations) {
+			if (mutation.type === "attributes") {
+				if (mutation.target.closest?.(watchlistWidgetSelector)) {
+					shouldUpdate = true;
+					break;
+				}
+			}
+
 			if (mutation.addedNodes.length > 0) {
 				for (const node of mutation.addedNodes) {
-					if (node.nodeType === 1) {
-						if (
-							node.hasAttribute?.("data-symbol-short") ||
-							node.querySelector?.("[data-symbol-short]")
-						) {
-							shouldInit = true;
-							break;
-						}
+					if (node.nodeType !== 1) continue;
+
+					if (
+						node.matches?.(watchlistWidgetSelector) ||
+						node.querySelector?.(watchlistWidgetSelector) ||
+						node.matches?.(watchlistSymbolSelector) ||
+						node.querySelector?.(watchlistSymbolSelector)
+					) {
+						shouldUpdate = true;
+						break;
 					}
 				}
 			}
-			if (shouldInit) break;
+
+			if (shouldUpdate) break;
 		}
 
-		if (shouldInit) {
-			debouncedTradingViewInit();
+		if (shouldUpdate) {
+			debouncedTradingViewHeatmapInit();
 		}
 	});
 
-	observer.observe(document.body, { childList: true, subtree: true });
+	observer.observe(document.body, {
+		childList: true,
+		subtree: true,
+		attributes: true,
+		attributeFilter: [
+			"data-active",
+			"data-selected",
+			"data-symbol-short",
+			"data-symbol-full",
+		],
+	});
 }
 
 const processedCoinglassRows = new WeakSet();
