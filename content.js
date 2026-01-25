@@ -108,10 +108,43 @@ function getTradingViewHeatmapUrl(coin) {
 	)}`;
 }
 
+function getSymbolFromPage() {
+	const detailsSymbol = document.querySelector(
+		'[data-qa-id="details-element symbol"]',
+	);
+	if (detailsSymbol && detailsSymbol.textContent) {
+		return detailsSymbol.textContent.trim();
+	}
+
+	const topBarButton = document.querySelector(
+		'[data-qa-id="ui-lib-pill-active-area-button"]',
+	);
+	if (topBarButton) {
+		const spans = topBarButton.querySelectorAll("span");
+		for (const span of spans) {
+			const text = span.textContent.trim();
+			if (text && /^[A-Z0-9.:\-\.]+$/.test(text)) {
+				return text;
+			}
+		}
+		if (topBarButton.textContent) {
+			const text = topBarButton.textContent.trim();
+			if (text) return text;
+		}
+	}
+
+	if (document.title) {
+		const parts = document.title.split(" ");
+		if (parts.length > 0 && /^[A-Z0-9]+/.test(parts[0])) {
+			return parts[0];
+		}
+	}
+
+	return null;
+}
+
 function getActiveWatchlistSymbol(widget) {
-	const activeRow =
-		widget.querySelector(watchlistActiveSelector) ||
-		widget.querySelector(watchlistSymbolSelector);
+	const activeRow = widget.querySelector(watchlistActiveSelector);
 
 	if (!activeRow) return null;
 
@@ -158,7 +191,15 @@ function ensureTradingViewHeatmapLink(widget) {
 	}
 
 	const activeSymbol = getActiveWatchlistSymbol(widget);
-	const coin = extractHeatmapCoin(activeSymbol?.short, activeSymbol?.full);
+	let coin = extractHeatmapCoin(activeSymbol?.short, activeSymbol?.full);
+
+	if (!coin) {
+		const pageSymbol = getSymbolFromPage();
+		if (pageSymbol) {
+			coin = extractHeatmapCoin(pageSymbol, null);
+		}
+	}
+
 	const heatmapHref = getTradingViewHeatmapUrl(coin);
 	const chartHref = coin
 		? getCoinglassTVUrl(coin)
